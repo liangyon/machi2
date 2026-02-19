@@ -23,6 +23,7 @@ from app.services.run_service import (
     shrine_flavor,
     build_narration,
 )
+from app.data.enemies import MINI_BOSSES, FINAL_BOSS
 
 router = APIRouter()
 
@@ -223,6 +224,26 @@ async def combat_action(
         state["xp"] = state.get("xp", 0) + result.xp_gained
         state["gold"] = state.get("gold", 0) + result.gold_gained
         state["kills"] = state.get("kills", 0) + 1
+
+        # Check if this was a boss (mini-boss or final boss)
+        enemy_name = enemy.get("name", "")
+        is_mini_boss = any(
+            mb["name"] == enemy_name for mb in MINI_BOSSES.values()
+        )
+        is_final_boss = enemy_name == FINAL_BOSS["name"]
+
+        if is_final_boss:
+            # Victory! Mark the run as won
+            new_run_status = "victory"
+        elif is_mini_boss:
+            # Advance to next floor after mini-boss
+            state["floor"] = state.get("floor", 1) + 1
+            state["danger_meter"] = 0
+            state["action_count"] = 0
+            level_up_info = level_up_info or {}
+            level_up_info["floor_advanced"] = True
+            level_up_info["new_floor"] = state["floor"]
+
         state["current_enemy"] = None
 
         # Check level up
@@ -231,6 +252,7 @@ async def combat_action(
             level_up_info = {
                 "new_level": state["level"],
                 "unspent_stat_points": state["unspent_stat_points"],
+                **(level_up_info or {}),
             }
 
     elif result.player_died:

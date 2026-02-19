@@ -422,7 +422,7 @@ export default function GamePage() {
           gold_gained: number;
           run_status: string;
           leveled_up: boolean;
-          level_up_info: { new_level: number; unspent_stat_points: number } | null;
+          level_up_info: { new_level: number; unspent_stat_points: number; floor_advanced?: boolean; new_floor?: number } | null;
           fled?: boolean;
           state: Record<string, unknown>;
         };
@@ -447,6 +447,9 @@ export default function GamePage() {
           setGameMode("exploring");
           if (r.leveled_up && r.level_up_info) {
             appendNarration(`\n\n🎉 LEVEL UP! You are now level ${r.level_up_info.new_level}! (+${r.level_up_info.unspent_stat_points} stat points)`);
+          }
+          if (r.level_up_info?.floor_advanced) {
+            appendNarration(`\n\n🏰 FLOOR ${r.level_up_info.new_floor}! The path descends deeper into the dungeon...`);
           }
           if (r.xp_gained > 0) {
             appendNarration(`\n+${r.xp_gained} XP, +${r.gold_gained} gold`);
